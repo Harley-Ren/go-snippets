@@ -62,17 +62,22 @@ func shouldEscape(c byte) bool {
 
 #【函数 function】
 在java里，如果函数没有返回值，要用void来修饰，而在Go里是不用的，感觉很自然。
+````go
 func subroutine( i int) {
-	 return
+	return
 }
+````
 Go的函数是可以返回多个返回值的，并且返回值可以是有名称的。当被命名后，在函数开始时，他们会被初始化为0值。 When named, they are initialized to the zero values for their types when the function begins. 
 
 下面的这样函数第二个返回值被命名为：nextPos。可以命名好处是参数自描述了。
+````go
 func nextInt(b []byte, pos int) (value, nextPos int) { /* ... */ }
-
+````
 因为命名了的返回值被初始化，并绑定到未加修饰的return上，所以它们很简洁。可以像内部变量一样在函数内部使用。
 Because named results are initialized and tied to an unadorned return, they can simplify
 as well as clarify. Here’s a version of io.ReadFull that uses them well:
+
+````go
 func ReadFull(r Reader, buf []byte) (n int, err error) { 
 	for len(buf) > 0 && err == nil {
 		var nr int
@@ -82,24 +87,30 @@ func ReadFull(r Reader, buf []byte) (n int, err error) {
 	}
 	return 
 }
+````
 
-【Deferred code 延迟执行的代码 】=========================================
+##【Deferred code 延迟执行的代码 】
 假设你写了一个函数，打开了一个文件，执行写操作，并且在这个函数中有多个return，那么你要在每个return前写上关闭文件的代码。像下面的代码一样。
+
+````go
 func ReadWrite() bool { 
 	file.Open("file") 
 	// Do your thing 
 	if failureX {
-		file.Close() ←
+		file.Close()
 		return false 
 	}
 	if failureY { 
-		file.Close() ← 
+		file.Close() //← 
 		return false
 	}
-	file.Close() ←
+	file.Close() //←
 	return true 
 }
+````
+
 写了好几个file.Close() ，麻烦吧？为了解决这个问题，Go语言引入了defer这个语句。在defer后面接一个函数，这个函数将在函数返回前执行。
+````go
 func ReadWrite() bool { 
 	file.Open("file") 
 	defer file.Close() 
@@ -112,119 +123,138 @@ func ReadWrite() bool {
 	}
 	return true 
 }
+````
 这样的代码清爽多了吧？
-* 你可以在函数里写多个defer，它们以FILO的顺序执行。
-defer后面的函数甚至可以修改函数的返回值。
-func f() (ret int) { ← ret is initialized with zero
-	defer func() {
-		ret++        ← Increment ret with 1
-	}() 
-	return 0         ← 1 not 0 will be returned!
-}
+你可以在函数里写多个defer，它们以FILO的顺序执行。
 
-【 变长参数 Variadic parameters 】
+defer后面的函数甚至可以修改函数的返回值。
+````go
+func f() (ret int) { //← ret is initialized with zero
+	defer func() {
+		ret++        //← Increment ret with 1
+	}() 
+	return 0         //← 1 not 0 will be returned!
+}
+````
+
+##【 变长参数 Variadic parameters 】
+````go
 func myfunc(arg ...int) {}
+````
 这个很好理解，要注意的是，如果你不指定变参的类型，那它默认的类型是empty inteface: interface{}
 
 变长参数的函数可以接受slice，我们要把数组传进来，只需要把数组转成slice.
+
+````go
 func myfunc1 ( args …int) {}
 a  := […]int {1,2,3}
 myfunc1(a…) //这就是调用方式。
+````
 
-【 以函数为值 】
+##【 以函数为值 】
 在go里函数跟其它东西是一样的，可以做为值传给变量。
+````go
 func main() {
-	a := func() { 					← define a nemeless function and assign to a
+	a := func() { 					//← define a nemeless function and assign to a
 		println("Hello world!")
-	}								← 注意这里没有括号()
-	a()								← 调用这个函数
+	}								//← 注意这里没有括号()
+	a()								//← 调用这个函数
 
 }
+````
 
-
-【 Callback 回调 】
+##【 Callback 回调 】
 函数可以做为值，那么回调就简单了。
-func callback(y int, f func(int)) { ← f will hold the function 
+````go
+func callback(y int, f func(int)) { //← f will hold the function 
 	f(y) ← Call the callback f with y
 }
+````
 
-
-【Panic and recovering】
+#【Panic and recovering】
 Go里没有像java一样的exception的处理机制，你无法抛出一个异常。代替它的是panic-recover这种机制。需要注意的是，你要把这做为最后的手段。
 
 Panic panic 是一个内置的函数，它停止正常的执行流程，开始panicing.当函数F调用了panic，那么F的执行就会被停止，任何deferred的函数都会被执行，接着F就返回到它的调用者。对F的调用者来说，F这时就相当于是panic函数了，请仔细理解这句话，也就是对于F的调用者来说，当F中调用了panic,那么调用F就相当于调用了panic.然后这个处理过程就沿着堆栈一直往上走，直到当前goroutine中的函数都返回，这时程序会崩溃。
 
-Recover  也是一个内置函数，它会重新获得一个已经panic的goroutine的控制权。有点像java中的try catch。
+**Recover**也是一个内置函数，它会重新获得一个已经panic的goroutine的控制权。有点像java中的try catch。
 	注意: recover只在deferred 函数中才有用。
 	在正常的流程中（非panic）调用recover是没用的，它会返回一个nil。
 
 
 chapter 4  Package
 
-	一个包是一系列的函数和数值。一个包里可以包含多个文件。按惯例包名一般是小写的。
-	
-	@是否要像java一样，把一个包入在包里的目录里？
-	
-	我们来定义一个包：
-	package even
-	
-	func Even(i int) bool { ← Exported function
-		return i % 2 == 0
-	}
-	
-	func odd(i int) bool { ← Private function
-		return i % 2 == 1
-	}
-	
-	以大写字母开头的函数是exported的，相当于public的。小写函数也就是private的了。
-	
-	* build一个包
-	% mkdir $GOPATH/src/even 		← Create top-level directory
-	% cp even.go $GOPATH/src/even 	← Copy the package file
-	% go build						← Build it
-	% go install					← Install it to ../pkg
-	 
-	这样我们就可以在程序里使用even这个包了。
-	package main
-	
-	import (
-		"even"
-		"fmt"
-	)
-	
-	func main() {
-		i := 5
-		fmt.Printf("Is %d even?",i,even.Even(i))
-	}
+一个包是一系列的函数和数值。一个包里可以包含多个文件。按惯例包名一般是小写的。
 
-	
-	包名是默认的访问符，你可以在import时指定一个新的访问符。
-	import bar "bytes"
-	bar.Buffer
-	另外一个convention是，包名是它的源代码目录名。如 src/pkg/compress/gzip,你可这样来导入它
-	import "compress/gzip"
-	这时，它的访问符是gzip,不是compress_gzip,也不是compressGzip.
-	
-	Finally, the convention in Go is to use MixedCaps or mixedCaps rather than underscores to write multi-word names.
-	
-	最后，Go一般使用混合大小写，而不是下划线的方式来表示一个多词的名字。
-	
-	- 给包添加文档
-	每个包应该有一个包文档，一个注释块，放在package这个语句的前面。如果包里有多个文件，只要在一个文件加上这个注释就可以，任何一个包里的文件都可以。
-	/*
-	The regexp package implements a simple library for regular expressions.
-	The syntax of the regular expressions accepted is:
-	regexp:
-		concatenation '|' concatenation
-	*/
-	package regexp
-	
-	每个包里的函数前面的注释被当作它的文档。
-	// Printf formats according to a format specifier and writes to standard // output. It returns the number of bytes written and any write error
-	// encountered.
-	func Printf(format string, a ...interface) (n int, err error)
-	
-	- 为包写单元测试 TODO......
+@是否要像java一样，把一个包入在包里的目录里？
+
+我们来定义一个包：
+````go
+package even
+
+func Even(i int) bool { ← Exported function
+return i % 2 == 0
+}
+
+func odd(i int) bool { ← Private function
+return i % 2 == 1
+}
+````
+
+以大写字母开头的函数是exported的，相当于public的。小写函数也就是private的了。
+
+build一个包
+````bash
+% mkdir $GOPATH/src/even 		← Create top-level directory
+% cp even.go $GOPATH/src/even 	← Copy the package file
+% go build						← Build it
+% go install					← Install it to ../pkg
+````
+这样我们就可以在程序里使用even这个包了。
+````go
+package main
+
+import (
+	"even"
+	"fmt"
+)
+
+func main() {
+	i := 5
+	fmt.Printf("Is %d even?",i,even.Even(i))
+}
+
+````
+包名是默认的访问符，你可以在import时指定一个新的访问符。
+````go
+import bar "bytes"
+bar.Buffer
+````
+另外一个convention是，包名是它的源代码目录名。如 src/pkg/compress/gzip,你可这样来导入它
+````go
+import "compress/gzip"
+````
+这时，它的访问符是gzip,不是compress_gzip,也不是compressGzip.
+
+Finally, the convention in Go is to use MixedCaps or mixedCaps rather than underscores to write multi-word names.
+
+最后，Go一般使用混合大小写，而不是下划线的方式来表示一个多词的名字。
+
+- 给包添加文档
+每个包应该有一个包文档，一个注释块，放在package这个语句的前面。如果包里有多个文件，只要在一个文件加上这个注释就可以，任何一个包里的文件都可以。
+/*
+The regexp package implements a simple library for regular expressions.
+The syntax of the regular expressions accepted is:
+regexp:
+concatenation '|' concatenation
+*/
+package regexp
+
+每个包里的函数前面的注释被当作它的文档。
+// Printf formats according to a format specifier and writes to standard // output. It returns the number of bytes written and any write error
+// encountered.
+func Printf(format string, a ...interface) (n int, err error)
+
+- 为包写单元测试 TODO......
 	
 Chapter 5	Beyond the basics 基础之外
 	-指针
