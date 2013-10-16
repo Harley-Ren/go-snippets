@@ -11,23 +11,22 @@ if err := file.Chmod(0664); err != nil { //← nil is like C's NULL
 }
 ````
 请看if后面用来限定条件的括号不见了，分号前面的部分是初始化部分，分号后面的才是判断条件。
-
-	if err != nil
-	{  	  ←Must be on the same line as the if
-	  return err
-	}
-
-上面的代码是错误的，在Go里，左花括号必须与if、switch等在*同行*。
-
+````go
+if err != nil
+{  	  //←Must be on the same line as the if
+  return err
+}
+````
+上面的代码是错误的，在Go里，左花括号必须与if、switch等在_同行_。
 
 range关键字很强大，它能用在for循环里，It can loop over slices, arrays, strings, maps and channels。
 遍历的对象不同，range返回的结果也不同，如果是slice, array,那第一个返回值是索引，第二个返回值是索引所在位置的数据。
-
+````go
 list := []string{"a", "b", "c", "d", "e", "f"}
 for k, v := range list {
 	//do what you want with k and v
 }
-
+````
 
 switch要特别注意，请看下面的例子：
 switch i {
@@ -37,13 +36,16 @@ case 1:
 }
 
 在C,java中，如果i为0，则会自动穿透而执行下面的语句，如果不想穿透则需要一个break关键字，而Go的思路是相反的！Go里默认是不穿透的，如果想穿透则必须使用关键字：fallthrough。
+````go
 switch i {
 case 0: fallthrough
 case 1:
 	 f() //f is called when i==0!
 }
-
+````
 case语句后面可以接逗号分隔的列表。
+
+````go
 func shouldEscape(c byte) bool {
 	 switch c {
 	 case ' ', '?', '&', '=', '#', '+':
@@ -51,8 +53,8 @@ func shouldEscape(c byte) bool {
 	 }
 	 return false
 }
-
-
+````
+## array 和 slice的区别
 array是值类型，意味着如果把数组传给函数，实际上是传递了一个数组的copy。slice是引用类型，传给函数传了一个引用。
 
 #【函数 function】
