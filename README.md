@@ -1,24 +1,23 @@
-http://daringfireball.net/projects/markdown/syntax
-
 go 语言学习笔记
-
+======
+#杂项
 := 这符号dephi里有，在go里 我看它的意义是 定义并赋值 define and assign。
 
 if和switch都可以包含 初始化语句 (initialization statement)
-
-if err := file.Chmod(0664); err != nil { ← nil is like C's NULL
-   fmt.Printf(err) ← Scope of err is limited to if's body
+````go
+if err := file.Chmod(0664); err != nil { //← nil is like C's NULL
+   fmt.Printf(err) //← Scope of err is limited to if's body
    return err
 }
-
+````
 请看if后面用来限定条件的括号不见了，分号前面的部分是初始化部分，分号后面的才是判断条件。
 
-if err != nil
-{  	  ←Must be on the same line as the if
-  return err
-}
+	if err != nil
+	{  	  ←Must be on the same line as the if
+	  return err
+	}
 
-上面的代码是错误的，在Go里，左花括号必须与if、switch等在同行。
+上面的代码是错误的，在Go里，左花括号必须与if、switch等在*同行*。
 
 
 range关键字很强大，它能用在for循环里，It can loop over slices, arrays, strings, maps and channels。
@@ -56,7 +55,7 @@ func shouldEscape(c byte) bool {
 
 array是值类型，意味着如果把数组传给函数，实际上是传递了一个数组的copy。slice是引用类型，传给函数传了一个引用。
 
-【函数 function】=========================================
+#【函数 function】
 在java里，如果函数没有返回值，要用void来修饰，而在Go里是不用的，感觉很自然。
 func subroutine( i int) {
 	 return
