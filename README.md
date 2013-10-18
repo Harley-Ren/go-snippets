@@ -106,6 +106,26 @@ foo就是array；如果我们这样写：
 	foo := []string{"test1","test2"}
 ```
 foo就是个slice。他们之间的区别就是方括号之间有没有那个length.
+```go
+package main
+
+import (
+	"fmt"
+	"reflect"
+)
+
+func main() {
+	foo := [2]string{"apple", "orange"}
+	foo2 := []string{"apple", "orange"}
+	fmt.Printf("Kind of foo : %s\n",reflect.ValueOf(foo).Kind().String())
+	fmt.Printf("Kind of foo2 : %s\n",reflect.ValueOf(foo2).Kind().String())
+}
+```
+Output:
+```text
+Kind of foo : array     
+Kind of foo2 : slice
+```
 
 * array是值类型，意味着如果把数组传给函数，实际上是传递了一个数组的copy。slice是引用类型，保持着对底层array的引用，如果把一个slice赋给另一个，那么它们两个都引用同一个数组了。
 * array是固定长度的。slice是可以扩展的，这使得它可以做为一个set用，：）。
