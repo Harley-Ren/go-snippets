@@ -56,6 +56,57 @@ func shouldEscape(c byte) bool {
 ````
 ## array 和 slice的区别
 
+* 首先从声明上可以看出来，数据在声明时必须有length；而slice则不需要。下面是go spec里关于array和slice的说明：
+
+	Array types
+
+	An array is a numbered sequence of elements of a single type, called the element type. The number of elements is called the length and is never negative.
+	
+	ArrayType   = "[" ArrayLength "]" ElementType .
+	ArrayLength = Expression .
+	ElementType = Type .
+	The length is part of the array's type; it must evaluate to a non- negative constant representable by a value of type int. The length of array a can be discovered using the built-in function len. The elements can be addressed by integer indices 0 through len(a)-1. Array types are always one-dimensional but may be composed to form multi-dimensional types.
+	
+	[32]byte
+	[2*N] struct { x, y int32 }
+	[1000]*float64
+	[3][5]int
+	[2][2][2]float64  // same as [2]([2]([2]float64))
+	Slice types
+	
+	A slice is a descriptor for a contiguous segment of an array and provides access to a numbered sequence of elements from that array. A slice type denotes the set of all slices of arrays of its element type. The value of an uninitialized slice is nil.
+	
+	SliceType = "[" "]" ElementType .
+	Like arrays, slices are indexable and have a length. The length of a slice s can be discovered by the built-in function len; unlike with arrays it may change during execution. The elements can be addressed by integer indices 0 through len(s)-1. The slice index of a given element may be less than the index of the same element in the underlying array.
+	
+	A slice, once initialized, is always associated with an underlying array that holds its elements. A slice therefore shares storage with its array and with other slices of the same array; by contrast, distinct arrays always represent distinct storage.
+	
+	The array underlying a slice may extend past the end of the slice. The capacity is a measure of that extent: it is the sum of the length of the slice and the length of the array beyond the slice; a slice of length up to that capacity can be created by slicing a new one from the original slice. The capacity of a slice a can be discovered using the built-in function cap(a).
+	
+	A new, initialized slice value for a given element type T is made using the built-in function make, which takes a slice type and parameters specifying the length and optionally the capacity:
+	
+	make([]T, length)
+	make([]T, length, capacity)
+	A call to make allocates a new, hidden array to which the returned slice value refers. That is, executing
+	
+	make([]T, length, capacity)
+	produces the same slice as allocating an array and slicing it, so these two examples result in the same slice:
+	
+	make([]int, 50, 100)
+	new([100]int)[0:50]
+	Like arrays, slices are always one-dimensional but may be composed to construct higher-dimensional objects. With arrays of arrays, the inner arrays are, by construction, always the same length; however with slices of slices (or arrays of slices), the lengths may vary dynamically. Moreover, the inner slices must be allocated individually (with make).
+
+
+根据spec说明，如果我们这样写：
+```go
+	foo := [5]string{"test1","test2"}
+```
+foo就是array；如果我们这样写：
+```go
+	foo := []string{"test1","test2"}
+```
+foo就是个slice。他们之间的区别就是方括号之间有没有那个length.
+
 * array是值类型，意味着如果把数组传给函数，实际上是传递了一个数组的copy。slice是引用类型，保持着对底层array的引用，如果把一个slice赋给另一个，那么它们两个都引用同一个数组了。
 * array是固定长度的。slice是可以扩展的，这使得它可以做为一个set用，：）。
 
@@ -181,7 +232,7 @@ Panic panic 是一个内置的函数，它停止正常的执行流程，开始pa
 	在正常的流程中（非panic）调用recover是没用的，它会返回一个nil。
 
 
-chapter 4  Package
+#chapter 4  Package
 
 一个包是一系列的函数和数值。一个包里可以包含多个文件。按惯例包名一般是小写的。
 
